@@ -4,6 +4,7 @@ from data_structures.union_find import UnionFind
 def test_init():
     ds = UnionFind([1, 2, 3])
     assert ds._elts == {1, 2, 3}
+    assert ds._reps == {1, 2, 3}
     assert ds._comp_count == 3
     assert ds._parent[2] == 2
 
@@ -68,3 +69,22 @@ def test_len():
 
     ds.union(1, 2)
     assert len(ds) == 1
+
+
+def equal_sets_collection(sets1, sets2):
+    if len(sets1) != len(sets2):
+        return False
+
+    for s in sets1:
+        if s not in sets2:
+            return False
+
+    return True
+
+
+def test_sets():
+    ds = UnionFind([1, 2, 3])
+    ds.union(2, 3)
+    expected = [{1}, {2, 3}]
+    actual = ds.sets()
+    assert equal_sets_collection(expected, actual), actual

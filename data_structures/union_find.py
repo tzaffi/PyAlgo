@@ -9,6 +9,7 @@ class UnionFind:
     def __init__(self, universe):
         self._others = defaultdict(set)
         self._elts = set(universe)
+        self._reps = self._elts.copy()
         self._comp_count = len(self._elts)
         self._parent = {x: x for x in self._elts}
 
@@ -20,6 +21,7 @@ class UnionFind:
             self._parent[parent_x] = parent_y
 
             self._comp_count -= 1
+            self._reps.remove(parent_x)
 
             self._others[parent_y] = self._others[parent_y].union(self._others[parent_x])
             self._others[parent_y].add(parent_x)
@@ -51,6 +53,13 @@ class UnionFind:
 
     def __len__(self):
         return self._comp_count
+
+    def sets(self):
+        res = []
+        for rep in self._reps:
+            res.append(self.component(rep))
+
+        return res
 
     # def add(self, *elts):
     #     actually_added = False

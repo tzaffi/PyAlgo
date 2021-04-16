@@ -1,269 +1,474 @@
-# AVL Binary search tree implementation in Python
-# Author: AlgorithmTutor
-# Reference: https://github.com/Bibeknam/algorithmtutorprograms/blob/master/data-structures/avl-trees/avl_tree.py
-# data structure that represents a node in the tree
+# fourth time is the charm?: https://github.com/Ualabi/self_balancing_binary_search_tree
 
+# Tree Node with different things that helps to build the AVL Tree
 
-import sys
+# Self Balancing Binary Search Tree based on the type of AVL Trees
 
-
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.parent = None
+class TreeNode:
+    # It instantiates the class
+    def __init__(self, val):
+        self.val = val
+        self.place = 0
+        self.height = 1
         self.left = None
         self.right = None
-        self.bf = 0
 
 
-class AVLTree:
+class sbbst:
+    # It instantiates the class O(1)
+    def __init__(self, valslist=None):
+        self.head = None
+        self.N = 0
+        self.count = 0
+        self.sizes = []
+        self.sumsizes = []
+        self.listInOrder = []
+        if type(valslist) == list:
+            for val in valslist:
+                self.head = self.insertNode(self.head, val)
 
-    def __init__(self):
-        self.root = None
-
-    def __printHelper(self, currPtr, indent, last):
-        # print the tree structure on the screen
-        if currPtr != None:
-            sys.stdout.write(indent)
-            if last:
-                sys.stdout.write("R----")
-                indent += "     "
-            else:
-                sys.stdout.write("L----")
-                indent += "|    "
-
-            print(currPtr.data)
-
-            self.__printHelper(currPtr.left, indent, False)
-            self.__printHelper(currPtr.right, indent, True)
-
-    def __searchTreeHelper(self, node, key):
-        if node == None or key == node.data:
-            return node
-
-        if key < node.data:
-            return self.__searchTreeHelper(node.left, key)
-        return self.__searchTreeHelper(node.right, key)
-
-    def __deleteNodeHelper(self, node, key):
-        # search the key
-        if node == None:
-            return node
-        elif key < node.data:
-            node.left = self.__deleteNodeHelper(node.left, key)
-        elif key > node.data:
-            node.right = self.__deleteNodeHelper(node.right, key)
+    # It return True if the val is found, False otherwhise O(logN)
+    def search(self, node, val):
+        if not node:
+            return False
         else:
-            # the key has been found, now delete it
+            if node.val < val:
+                return self.search(node.right, val)
+            elif val < node.val:
+                return self.search(node.left, val)
+            else:
+                return True
 
-            # case 1: node is a leaf node
-            if node.left == None and node.right == None:
+    # It inserts a node and updates the head node O(logN)
+    def insert(self, val):
+        self.head = self.insertNode(self.head, val)
+
+    # It inserts a node with a value and returns the node of the modified subtree O(logN)
+    def insertNode(self, node, key):
+        # Step 1 - Perform normal BST
+        if not node:
+            self.N += 1
+            return TreeNode(key)
+
+        elif key < node.val:
+            node.left = self.insertNode(node.left, key)
+        else:
+            node.right = self.insertNode(node.right, key)
+
+        # 2: Update the height of the node
+        node.height = 1 + max(self.getHeight(node.left), self.getHeight(node.right))
+        # 3: Get the balance factor
+        balance = self.getBalance(node)
+        # 4: If the node is unbalanced, try out the 2 cases
+        if balance > 1:  # Case 1: Left (Left/Right)
+            if key > node.left.val:
+                node.left = self.leftRotate(node.left)
+            return self.rightRotate(node)
+        if balance < -1:  # Case 2: Right (Left/Right)
+            if key < node.right.val:
+                node.right = self.rightRotate(node.right)
+            return self.leftRotate(node)
+        # Return the result node
+        return node
+
+    # It deletes a node with a certain value and updates the head node O(logN)
+    def delete(self, val):
+        self.head = self.deleteNode(self.head, val)
+
+    # It deletes a node with a certain value and returns the node of the modified subtree O(logN)
+    def deleteNode(self, node, key):
+        # 1: Standard BST delete
+        if not node:
+            return node
+
+        elif key < node.val:
+            node.left = self.deleteNode(node.left, key)
+        elif key > node.val:
+            node.right = self.deleteNode(node.right, key)
+
+        else:  # key == node.val
+            if node.left is None:
+                self.N -= 1
+                temp = node.right
                 node = None
+                return temp
+            elif node.right is None:
+                self.N -= 1
+                temp = node.left
+                node = None
+                return temp
+            else:  # node.left and node.right
+                temp = self.getMinValueNode(node.right)
+                node.val = temp.val
+                node.right = self.deleteNode(node.right, temp.val)
 
-            # case 2: node has only one child
-            elif node.left == None:
-                temp = node
-                node = node.right
-
-            elif node.right == None:
-                temp = node
-                node = node.left
-
-            # case 3: has both children
-            else:
-                temp = minimum(node.right)
-                node.data = temp.data
-                node.right = self.__deleteNodeHelper(node.right, temp.data)
-
-            # Write the update balance logic here
-            # YOUR CODE HERE
+        # Return None if there is no more nodes
+        if node is None:
+            return node
+        # 2: Update the height of the node
+        node.height = 1 + max(self.getHeight(node.left), self.getHeight(node.right))
+        # 3: Get the balance factor
+        balance = self.getBalance(node)
+        # 4: If the node is unbalanced, try out the 2 cases
+        if balance > 1:  # Case 1: Left (Left/Right)
+            if self.getBalance(node.left) < 0:
+                node.left = self.leftRotate(node.left)
+            return self.rightRotate(node)
+        if balance < -1:  # Case 2: Right (Right/Left)
+            if self.getBalance(node.right) > 0:
+                node.right = self.rightRotate(node.right)
+            return self.leftRotate(node)
+        # Return the result node
         return node
 
-    # update the balance factor the node
-    def __updateBalance(self, node):
-        if node.bf < -1 or node.bf > 1:
-            self.__rebalance(node)
-            return
+    # It rotates the tree to the left and returns the node O(1)
+    def leftRotate(self, node):
+        rnode = node.right
+        T = rnode.left
+        # Perform rotation
+        rnode.left = node
+        node.right = T
+        # Update heights
+        node.height = 1 + max(self.getHeight(node.left), self.getHeight(node.right))
+        rnode.height = 1 + max(self.getHeight(rnode.left), self.getHeight(rnode.right))
+        # Return the new node
+        return rnode
 
-        if node.parent != None:
-            if node == node.parent.left:
-                node.parent.bf -= 1
+    # It rotates the tree to the right and returns the node O(1)
+    def rightRotate(self, node):
+        lnode = node.left
+        T = lnode.right
+        # Perform rotation
+        lnode.right = node
+        node.left = T
+        # Update heights
+        node.height = 1 + max(self.getHeight(node.left), self.getHeight(node.right))
+        lnode.height = 1 + max(self.getHeight(lnode.left), self.getHeight(lnode.right))
+        # Return the new node
+        return lnode
 
-            if node == node.parent.right:
-                node.parent.bf += 1
+    # It returns the height of a node O(1)
+    def getHeight(self, node):
+        if not node:
+            return 0
+        return node.height
 
-            if node.parent.bf != 0:
-                self.__updateBalance(node.parent)
+    # It returns the balance of the node O(1)
+    def getBalance(self, node):
+        if not node:
+            return 0
+        return self.getHeight(node.left) - self.getHeight(node.right)
 
-         # rebalance the tree
-    def __rebalance(self, node):
-        if node.bf > 0:
-            if node.right.bf < 0:
-                self.rightRotate(node.right)
-                self.leftRotate(node)
+    # It returns the min Node O(logN)
+    def getMinValueNode(self, node):
+        if node is None or node.left is None:
+            return node
+        return self.getMinValueNode(node.left)
+
+    # It returns the min value of the Tree O(logN + K)
+    def kthsmallest(self, K):
+        if K < 0:
+            print('There are not enough elements in the Tree')
+            return None
+        elif self.N//2+1 < K:
+            return self.kthlargest(self.N+1-K)
+        else:
+            stack = []
+            node = self.head
+            while(stack or node):
+                if node:
+                    stack.append(node)
+                    node = node.left
+                else:
+                    node = stack.pop()
+                    if K == 1:
+                        return node.val
+                    else:
+                        K -= 1
+                    node = node.right
+
+    # It returns the max value of the Tree O(losgN + K)
+    def kthlargest(self, K):
+        if K < 0:
+            print('There are not enough elements in the Tree')
+            return None
+        elif self.N//2+1 < K:
+            return self.kthsmallest(self.N+1-K)
+        else:
+            stack = []
+            node = self.head
+            while(stack or node):
+                if node:
+                    stack.append(node)
+                    node = node.right
+                else:
+                    node = stack.pop()
+                    if K == 1:
+                        return node.val
+                    else:
+                        K -= 1
+                    node = node.left
+
+    # It returns the min value of the Tree O(logN + K)
+    def getMinVal(self, node=-1):
+        if node == -1:
+            if self.head == None:
+                print('No elements in the Tree')
+                return float('inf')
             else:
-                self.leftRotate(node)
-        elif node.bf < 0:
-            if node.left.bf > 0:
-                self.leftRotate(node.left)
-                self.rightRotate(node)
+                node = self.head
+        if node.left:
+            return self.getMinVal(node.left)
+        else:
+            return node.val
+
+    # It returns the max value of the Tree O(logN)
+    def getMaxVal(self, node=-1):
+        if node == -1:
+            if self.head == None:
+                print('No elements in the Tree')
+                return float('-inf')
             else:
-                rightRotate(node)
+                node = self.head
+        if node.right:
+            return self.getMaxVal(node.right)
+        else:
+            return node.val
 
-    def __preOrderHelper(self, node):
-        if node != None:
-            sys.stdout.write(node.data + " ")
-            self.__preOrderHelper(node.left)
-            self.__preOrderHelper(node.right)
+    # It returns the number of elements in the Tree O(1)
+    def getSize(self):
+        return self.N
 
-    def __inOrderHelper(self, node):
-        if node != None:
-            self.__inOrderHelper(node.left)
-            sys.stdout.write(node.data + " ")
-            self.__inOrderHelper(node.right)
+    # It returns the height of the Tree O(1)
+    def getHeightTree(self):
+        if self.head == None:
+            return 0
+        return self.head.height
 
-    def __postOrderHelper(self, node):
-        if node != None:
-            self.__postOrderHelper(node.left)
-            self.__postOrderHelper(node.right)
-            std.out.write(node.data + " ")
+    # It returns a list in pre Order of the Tree O(N)
+    def preOrder(self, node=-1):
+        if node == -1:
+            node = self.head
+        if node:
+            return [node.val] + self.preOrder(node.left) + self.preOrder(node.right)
+        else:
+            return []
 
-    # Pre-Order traversal
-    # Node->Left Subtree->Right Subtree
-    def preorder(self):
-        self.__preOrderHelper(self.root)
+    # It returns a list in Order of the Tree O(N)
+    def inOrder(self, node=-1):
+        if node == -1:
+            node = self.head
+        if node:
+            return self.inOrder(node.left) + [node.val] + self.inOrder(node.right)
+        else:
+            return []
 
-    # In-Order traversal
-    # Left Subtree -> Node -> Right Subtree
-    def __inorder(self):
-        self.__inOrderHelper(self.root)
+    # It returns a list in post Order of the Tree O(N)
+    def postOrder(self, node=-1):
+        if node == -1:
+            node = self.head
+        if node:
+            return self.postOrder(node.left) + self.postOrder(node.right) + [node.val]
+        else:
+            return []
 
-    # Post-Order traversal
-    # Left Subtree -> Right Subtree -> Node
-    def __postorder(self):
-        self.__postOrderHelper(self.root)
+    # It updates the place of each node and get the list of nodes in Order O(N)
+    def getListInOrder(self, node=-1):
+        if node == -1:
+            self.count = 0
+            node = self.head
+            self.listInOrder = []
+        if node:
+            self.getListInOrder(node.left)
+            self.listInOrder.append(node.val)
+            node.place = self.count
+            self.count += 1
+            self.getListInOrder(node.right)
 
-    # search the tree for the key k
-    # and return the corresponding node
-    def searchTree(self, k):
-        return self.__searchTreeHelper(self.root, k)
+    # It updates the lists of the size of each value of nodes O(N)
+    def lenNodes(self):
+        self.sizes = []
+        self.sumsizes = []
+        for x in self.listInOrder:
+            self.sizes.append(len(str(x)))
+        past = 1
+        for x in self.sizes:
+            self.sumsizes.append(past)
+            past += x
+        self.sumsizes.append(past)
 
-    # find the node with the minimum key
-    def minimum(self, node):
-        while node.left != None:
+    # It returns the full draw of the tree in 2dimensions O(N)
+    def __str__(self):
+        self.getListInOrder()
+        self.lenNodes()
+        if self.head == None:
+            return 'No elements in the Tree'
+
+        outstr = '\n'
+        queue = [self.head]
+        while queue:
+            aux = []
+            past, nextpast = 0, 0
+            line, nextline = '', ''
+            for q in queue:
+                if q.left and q.right:
+                    aux.append(q.left)
+                    aux.append(q.right)
+                    # Print of the _ and the values of the nodes
+                    line += ' '*(self.sumsizes[q.left.place+1]-past) + '_'*(self.sumsizes[q.place]-self.sumsizes[q.left.place+1]) + str(
+                        q.val) + '_'*(self.sumsizes[q.right.place]-self.sumsizes[q.place+1])
+                    past = self.sumsizes[q.right.place]
+                    # Print of the arms of the Tree
+                    nextline += ' '*(self.sumsizes[q.left.place+1]-nextpast-1) + '/' + ' '*(
+                        self.sumsizes[q.right.place]-self.sumsizes[q.left.place+1]) + '\\' + ' '*(self.sizes[q.right.place]-1)
+                    nextpast = self.sumsizes[q.right.place+1]
+                elif q.left:
+                    aux.append(q.left)
+                    # Print of the _ and the values of the nodes
+                    line += ' '*(self.sumsizes[q.left.place+1]-past) + '_' * \
+                        (self.sumsizes[q.place]-self.sumsizes[q.left.place+1]) + str(q.val)
+                    past = self.sumsizes[q.place+1]
+                    # Print of the arms of the Tree
+                    nextline += ' '*(self.sumsizes[q.left.place+1]-nextpast-1) + '/'
+                    nextpast = self.sumsizes[q.left.place+1]
+                elif q.right:
+                    aux.append(q.right)
+                    # Print of the _ and the values of the nodes
+                    line += ' '*(self.sumsizes[q.place]-past)+str(q.val)+'_' * \
+                        (self.sumsizes[q.right.place]-self.sumsizes[q.place+1])
+                    past = self.sumsizes[q.right.place]
+                    # Print of the arms of the Tree
+                    nextline += ' '*(self.sumsizes[q.right.place]-nextpast) + '\\' + ' '*(self.sizes[q.right.place]-1)
+                    nextpast = self.sumsizes[q.right.place+1]
+                else:
+                    line += ' '*(self.sumsizes[q.place]-past)+str(q.val)
+                    past = self.sumsizes[q.place+1]
+            # Add the lines to the output string
+            outstr += line + '\n' + nextline + '\n'
+            queue = aux
+        return outstr[:-1]
+
+# It returns the head of the Tree that was build with the plane Tree "s"
+
+
+def getTree(s):
+    if type(s) == str:
+        if ',' in s:
+            key = ','
+            s.replace(' ', '')
+        else:
+            key = ' '
+        aux = s.split(key)
+        key = 'null' if 'null' in aux else ('None' if 'None' in aux else '-1')
+        mylist = [None if x == key else int(x) for x in aux]
+    elif type(s) == list and 0 < len(s) and type(s[0]) == int:
+        mylist = s if None in s else [None if x == -1 else int(x) for x in s]
+    else:
+        print('Wrong format for the input')
+        return None
+    # Stars building the tree
+    head = TreeNode(mylist[0])
+    queue = [head]
+    i = 1
+    while queue:
+        aux = []
+        for q in queue:
+            if mylist[i] != None:
+                q.left = TreeNode(mylist[i])
+                aux.append(q.left)
+            i += 1
+            if mylist[i] != None:
+                q.right = TreeNode(mylist[i])
+                aux.append(q.right)
+            i += 1
+        queue = aux
+    return head
+
+# It returns the full draw of the tree in 2dimensions O(N)
+
+
+def getStr(head):
+    if head == None:
+        return 'No elements in the Tree'
+    # Gets the in-order list of the values and its place
+    listInOrder, stack = [], []
+    node = head
+    count = 0
+    while(stack or node):
+        if node:
+            stack.append(node)
             node = node.left
-        return node
-
-    # find the node with the maximum key
-    def maximum(self, node):
-        while node.right != None:
+        else:
+            node = stack.pop()
+            listInOrder.append(node.val)
+            node.place = count
+            count += 1
             node = node.right
-        return node
-
-    # find the successor of a given node
-    def successor(self, x):
-        # if the right subtree is not null,
-        # the successor is the leftmost node in the
-        # right subtree
-        if x.right != None:
-            return self.minimum(x.right)
-
-        # else it is the lowest ancestor of x whose
-        # left child is also an ancestor of x.
-        y = x.parent
-        while y != None and x == y.right:
-            x = y
-            y = y.parent
-        return y
-
-    # find the predecessor of a given node
-    def predecessor(self, x):
-        # if the left subtree is not null,
-        # the predecessor is the rightmost node in the
-        # left subtree
-        if x.left != None:
-            return self.maximum(x.left)
-
-        y = x.parent
-        while y != None and x == y.left:
-            x = y
-            y = y.parent
-        return y
-
-    # rotate left at node x
-    def leftRotate(self, x):
-        y = x.right
-        x.right = y.left
-        if y.left != None:
-            y.left.parent = x
-
-        y.parent = x.parent
-        if x.parent == None:
-            self.root = y
-        elif x == x.parent.left:
-            x.parent.left = y
-        else:
-            x.parent.right = y
-        y.left = x
-        x.parent = y
-
-        # update the balance factor
-        x.bf = x.bf - 1 - max(0, y.bf)
-        y.bf = y.bf - 1 + min(0, x.bf)
-
-    # rotate right at node x
-    def rightRotate(self, x):
-        y = x.left
-        x.left = y.right
-        if y.right != None:
-            y.right.parent = x
-
-        y.parent = x.parent
-        if x.parent == None:
-            self.root = y
-        elif x == x.parent.right:
-            x.parent.right = y
-        else:
-            x.parent.left = y
-
-        y.right = x
-        x.parent = y
-
-        # update the balance factor
-        x.bf = x.bf + 1 - min(0, y.bf)
-        y.bf = y.bf + 1 + max(0, x.bf)
-
-    # insert the key to the tree in its appropriate position
-    def insert(self, key):
-        # PART 1: Ordinary BST insert
-        node = Node(key)
-        y = None
-        x = self.root
-
-        while x != None:
-            y = x
-            if node.data < x.data:
-                x = x.left
+    # Gets the sizes of each node
+    sizes, sumsizes = [], []
+    for x in listInOrder:
+        sizes.append(len(str(x)))
+    past = 1
+    for x in sizes:
+        sumsizes.append(past)
+        past += x
+    sumsizes.append(past)
+    # Builds the output string
+    outstr = '\n'
+    queue = [head]
+    while queue:
+        aux = []
+        past, nextpast = 0, 0
+        line, nextline = '', ''
+        for q in queue:
+            if q.left and q.right:
+                aux.append(q.left)
+                aux.append(q.right)
+                # Print of the _ and the values of the nodes
+                line += ' '*(sumsizes[q.left.place+1]-past) + '_'*(sumsizes[q.place]-sumsizes[q.left.place+1]
+                                                                   ) + str(q.val) + '_'*(sumsizes[q.right.place]-sumsizes[q.place+1])
+                past = sumsizes[q.right.place]
+                # Print of the arms of the Tree
+                nextline += ' '*(sumsizes[q.left.place+1]-nextpast-1) + '/' + ' ' * \
+                    (sumsizes[q.right.place]-sumsizes[q.left.place+1]) + '\\' + ' '*(sizes[q.right.place]-1)
+                nextpast = sumsizes[q.right.place+1]
+            elif q.left:
+                aux.append(q.left)
+                # Print of the _ and the values of the nodes
+                line += ' '*(sumsizes[q.left.place+1]-past) + '_' * \
+                    (sumsizes[q.place]-sumsizes[q.left.place+1]) + str(q.val)
+                past = sumsizes[q.place+1]
+                # Print of the arms of the Tree
+                nextline += ' '*(sumsizes[q.left.place+1]-nextpast-1) + '/'
+                nextpast = sumsizes[q.left.place+1]
+            elif q.right:
+                aux.append(q.right)
+                # Print of the _ and the values of the nodes
+                line += ' '*(sumsizes[q.place]-past)+str(q.val)+'_'*(sumsizes[q.right.place]-sumsizes[q.place+1])
+                past = sumsizes[q.right.place]
+                # Print of the arms of the Tree
+                nextline += ' '*(sumsizes[q.right.place]-nextpast) + '\\' + ' '*(sizes[q.right.place]-1)
+                nextpast = sumsizes[q.right.place+1]
             else:
-                x = x.right
+                line += ' '*(sumsizes[q.place]-past)+str(q.val)
+                past = sumsizes[q.place+1]
+        # Add the lines to the output string
+        outstr += line + '\n' + nextline + '\n'
+        queue = aux
+    return outstr[:-1]
 
-        # y is parent of x
-        node.parent = y
-        if y == None:
-            self.root = node
-        elif node.data < y.data:
-            y.left = node
+# it Returns the Tree in its plane form
+
+
+def getList(Node):
+    treeList = []
+    stack = [Node]
+    while stack:
+        q = stack.pop()
+        if q:
+            treeList.append(q.val)
+            stack.append(q.right)
+            stack.append(q.left)
         else:
-            y.right = node
-
-        # PART 2: re-balance the node if necessary
-        self.__updateBalance(node)
-
-    # delete the node from the tree
-
-    def deleteNode(self, data):
-        return self.__deleteNodeHelper(self.root, data)
-
-    # print the tree structure on the screen
-    def prettyPrint(self):
-        self.__printHelper(self.root, "", True)
+            treeList.append(None)
+    return treeList

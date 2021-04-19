@@ -6,8 +6,7 @@ def test_zrie_basic():
     zrie = Zrie(words)
     assert sorted(words) == zrie.radix_sort()
     assert "cog" in zrie
-    assert "log" not in zrie
-    assert zrie.prefix("log") == "lo"
+    assert "cot" not in zrie
 
 
 # def test_dfa_basic():

@@ -19,6 +19,12 @@ class State:
     def set_radix_sortable(self):
         self.radix_sort_keys = sorted(self.transitions.keys())
 
+    def accepted(self, word: str):
+        if not word:
+            return self.accept
+        c = word[0]
+        return self.transitions[c].accepted(word[1:]) if c in self.transitions else False
+
 
 class Zrie:
     """
@@ -59,6 +65,9 @@ class Zrie:
 
         preorder("", self.start)
         return collected
+
+    def __contains__(self, word: str) -> bool:
+        return self.start.accepted(word)
 
 
 class DFA:

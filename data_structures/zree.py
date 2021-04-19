@@ -301,9 +301,9 @@ class Zree:
         children = node.children()
         if len(children) == 2:
             if node.imbalance() > 0:
-                node = node.pluck_predecessor_as_root()
+                node = self.pluck_predecessor_as_root(node)
             else:
-                node = node.pluck_successor_as_root()
+                node = self.pluck_successor_as_root(node)
         else:
             node = node.left if node.left else node.right
 
@@ -331,6 +331,32 @@ class Zree:
 
         return self.root.find_path(x) is not None
 
+    def minimum(self):
+        if self.verbose:
+            print("Zree custom minimum()")
+
+        if not self.root:
+            raise ValueError("minimum() arg is an empty sequence")
+
+        node = self.root
+        while node.left:
+            node = node.left
+
+        return node.x
+
+    def maximum(self):
+        if self.verbose:
+            print("Zree custom maximum()")
+
+        if not self.root:
+            raise ValueError("maximum() arg is an empty sequence")
+
+        node = self.root
+        while node.right:
+            node = node.right
+
+        return node.x
+
 
 class SortedList:
     """
@@ -343,9 +369,11 @@ class SortedList:
     >>> assert len(sl) == 1004                  # you can get its length in O(1)
     >>> assert 42 in sl                         # you can check for containment in O(log N)
     >>> for x in sl: print(x)                   # you can iterate through the entire list in O(N)
-    >>> assert sl != SorteList(range(1004))     # you can test for equality in O(N)
+    >>> assert sl != SortedList(range(1004))    # you can test for equality in O(N)
     >>> sl.tree_print()                         # you can print a pre-order traversal in O(N)
-
+    >>> assert sl.minimum() == -5               # you can get the min in O(log N) (but the built-in will be slower)
+    >>> assert sl.maximum() == 1337             # you can get the max in O(log N) (but the built-in will be slower)
+    >>> sl.remove(1337)                         # you can remove an element in O(log N)
     """
 
     def __init__(self, it: Iterable = [], verbose: bool = False):
@@ -358,6 +386,9 @@ class SortedList:
         return self
 
     def remove(self, x):
+        """
+        Raises a ValueError if `x not in self`
+        """
         self._zree.remove(x)
 
     def tree_print(self):
@@ -387,3 +418,9 @@ class SortedList:
 
     def __len__(self):
         return 0 if not self._zree else len(self._zree)
+
+    def minimum(self):
+        return self._zree.minimum()
+
+    def maximum(self):
+        return self._zree.maximum()

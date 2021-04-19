@@ -223,3 +223,20 @@ def test_equals():
 
     assert sl1 == sl3
     assert sl1._zree == sl3._zree
+
+
+def test_class_comment():
+    verbose = False
+
+    sl = SortedList(range(1000), verbose=verbose)
+    sl.add(-4).add(-5).add(42).add(1337)
+    assert len(sl) == 1004
+    assert 42 in sl
+    for _ in sl:
+        pass
+    assert sl != SortedList(range(1004))
+    if verbose:
+        sl.tree_print()
+    assert sl.minimum() == -5
+    assert sl.maximum() == 1337
+    sl.remove(1337)

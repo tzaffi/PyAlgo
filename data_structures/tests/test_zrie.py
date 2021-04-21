@@ -57,4 +57,20 @@ def test_dfa_basic():
     assert "" not in evens
     assert len(binary_evens) == 2
 
-    # mdfa = dfa.minimize()
+    assert evens.alphabet() == list(map(str, range(10)))
+    assert binary_evens.alphabet() == ["0", "1"]
+
+
+def test_dfa_minimization():
+    words = ["cat", "dog", "eel", "fin", "gil", "hen"]
+    zrie = Zrie(words)
+    assert len(zrie) == 19
+    assert list(zrie) == words
+    mdfa = zrie.min_dfa()
+    assert len(mdfa.alphabet()) == 12
+    print(mdfa.states.keys())
+    assert len(mdfa) == 12
+    # assert list(mdfa) == list(zrie)
+    assert "he" not in mdfa
+    assert "hen" in mdfa
+    assert list(mdfa) == list(zrie)

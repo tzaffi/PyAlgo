@@ -260,7 +260,7 @@ class DFA:
         term_lbl = partition.reverse_idx[dead]
         is_terminal = False
         if (term_lbl, False) in transitions:
-            print("HIYA")
+            # print("HIYA")
             if {tgt for _, tgt in transitions[(term_lbl, False)]} == {term_lbl}:
                 is_terminal = True
         if is_terminal:

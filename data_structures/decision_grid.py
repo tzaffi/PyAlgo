@@ -33,12 +33,15 @@ class DecisionGrid:
     --+0 2 6 8 x
     """
 
-    def __init__(self, cutoffs: Dict[float, float]):
+    def __init__(self, cutoffs: Dict[float, float], verbose: bool = False):
         self.cutoffs = cutoffs
         self.x_cuts = sorted(cutoffs.keys())
         self.y_cuts = [self.cutoffs[x] for x in self.x_cuts]
-        print(f"x_cuts: {self.x_cuts}")
-        print(f"y_cuts: {self.y_cuts}")
+        self.verbose = verbose
+
+        if self.verbose:
+            print(f"x_cuts: {self.x_cuts}")
+            print(f"y_cuts: {self.y_cuts}")
 
     def __str__(self) -> str:
         assert 0 < min(self.x_cuts) and 0 < min(self.y_cuts), "string representation assumes positive lowest cuts"
@@ -55,7 +58,7 @@ class DecisionGrid:
 
         rows = ["y"]
         rows.extend(map(make_row, ys))
-        last_row = "-" * x_width
+        last_row = "-" * y_width
         last_row += "+"
         last_row += "".join((f"{str(x):{x_width}s}" for x in xs))
         last_row += "x"

@@ -21,3 +21,23 @@ After several tries, I finally found a [good 'nuff explanation](https://bradfiel
 
 
 ### Decision Grid
+[code](https://github.com/tzaffi/PyAlgo/blob/main/data_structures/decision_grid.py)
+
+Build a very small 2-monotonic-variable decider. EG:
+```python
+>>> from data_structures.decision_grid import DecisionGrid
+>>> 
+>>> dg_def = {
+...     2: 20,   # x < 2      ==> 20 <= y
+...     6: 10,   # 2 <= x < 6 ==> 10 <= y
+...     8:  5,   # 6 <= x < 8 ==>  5 <= y
+...              # 8 <= x     ==> APPROVE
+... }
+>>> print(DecisionGrid(dg_def))
+y
+20|********
+10|XX******
+ 5|XXXX****
+ 0|XXXXXX**
+--+0 2 6 8 x
+```

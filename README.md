@@ -7,7 +7,7 @@ Some Data Structures and Algorithms in Python
 ## Balanced Tree Data Structure (someone else's)
 After several tries, I finally found a [good 'nuff explanation](https://bradfieldcs.com/algos/trees/avl-trees/). I was inspired by their code (but mostly wrote my own interpretation).
 
-## My Own AVL Tree with a SorteList Implementation to Boot
+## My Own AVL Tree with a SortedList Implementation to Boot
 [code](https://github.com/tzaffi/PyAlgo/blob/main/data_structures/zree.py)
 
 #### TODO: add a SortedDict Implementation
